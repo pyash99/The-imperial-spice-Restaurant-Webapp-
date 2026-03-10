@@ -1,60 +1,135 @@
 <%- include("./partials/header") %>
 
-<div class="container">
-    <% if(!noMessage) { %>
-        <div class="row">
-            <div class="col-sm-6 col-md-4 col-md-offset-4 col-sm-offset-3">
-                <div id="success" class="alert alert-success">
-                    <%= successMsg %>
+<div class="menu-section" style="padding-top: 80px;">
+    <div class="container">
+        <% if(!noMessage) { %>
+            <div class="row">
+                <div class="col-sm-6 col-md-4 col-md-offset-4 col-sm-offset-3">
+                    <div id="success" class="alert alert-success">
+                        <%= successMsg %>
+                    </div>
                 </div>
             </div>
-        </div>
- <% } %> 
-</div>
+        <% } %>
+        <% if(!user) { %>
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="alert alert-info" style="background: linear-gradient(135deg, #c9a227 0%, #d4af37 100%); border: none; border-radius: 10px; text-align: center; padding: 20px;">
+                        <h4 style="margin: 0; color: #1a1a1a; font-weight: 600;">
+                            <i class="fas fa-info-circle"></i> Please <a href="/users/login" style="color: #1a1a1a; text-decoration: underline;">login</a> to add items to cart and place orders!
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
 
-<div class="menu-container">
-    <div class="row">
-        <div class="col-lg-1"></div>
-        <div class="col-lg-11">
-                <div class="container temp">
-                    <% products.forEach((product) => { %>
-                        <% product.forEach((item) => { %>
-                            <div class="col-md-4 col-sm-6 col-xs-12 cmdtest">
-                                <div class="thumbnail">
-                                    <img src="<%= item.image %>">
-                                    <div class="caption">
-                                        <center><h3><%= item.name %></h3></center>
-                                        <h4 class="price"><span id="cash"><i class="fas fa-rupee-sign"></i><%= item.price%></span><a href="/add-to-cart/<%= item._id %>" class="btn btn-success cart ">Add to Cart</a></h4>
+    <div class="menu-container">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 48px; color: #fff;">
+                Our <span style="color: #c9a227;">Menu</span>
+            </h2>
+            
+            <div class="row">
+                <% products.forEach((product) => { %>
+                    <% product.forEach((item) => { %>
+                        <% 
+                            var qty = 0;
+                            if(session.cart && session.cart.items) {
+                                Object.keys(session.cart.items).forEach(function(key) {
+                                    if(key === item._id.toString()) {
+                                        qty = session.cart.items[key].qty;
+                                    }
+                                });
+                            }
+                        %>
+                        <div class="col-md-4 col-sm-6 col-xs-12">
+                            <div class="thumbnail">
+                                <img src="<%= item.image %>" alt="<%= item.name %>">
+                                <div class="caption">
+                                    <h3><%= item.name %></h3>
+                                    <div class="price">
+                                        <span><i class="fas fa-rupee-sign"></i><%= item.price%></span>
+                                        <% if(qty > 0) { %>
+                                            <span class="quantity-badge"><%= qty %> in cart</span>
+                                        <% } %>
+                                    </div>
+                                    <div class="cart-actions">
+                                        <% if(user) { %>
+                                            <a href="/add-to-cart/<%= item._id %>" class="cart">Add to Cart</a>
+                                            <% if(qty > 0) { %>
+                                                <div class="quantity-controls">
+                                                    <a href="/reduce/<%= item._id %>" class="qty-btn">-</a>
+                                                    <span class="qty-display"><%= qty %></span>
+                                                    <a href="/add-to-cart/<%= item._id %>" class="qty-btn">+</a>
+                                                </div>
+                                            <% } %>
+                                        <% } else { %>
+                                            <a href="/users/login" class="cart" style="background: #666;">Login to Order</a>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
-                        <% }) %>      
-                    <% }) %>
-                </div>
+                        </div>
+                    <% }) %>      
+                <% }) %>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- <script>
-    let cart = document.querySelector('.cart');
-    cart.addEventListener('click' , () => alert('added to the cart'));
-</script> -->
-
-
-<footer class="footer1">
-    <div>
-        <center><a href="/cart " class="bt "><i class="fas fa-shopping-cart"></i>
-            <% if(session.cart === undefined || session.cart === null) { %>
-                <span class="badge"></span>
-              <% } else { %>
-                <span class="badge"><%= session.cart.totalQty %></span>
-              <% } %></a></center>
-       
-    </div>
-        
+<style>
+    .quantity-badge {
+        background: #c9a227;
+        color: #1a1a1a;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 10px;
+    }
     
-</footer>
-
-
+    .cart-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .qty-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: #c9a227;
+        color: #1a1a1a;
+        border-radius: 50%;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 18px;
+        transition: all 0.3s ease;
+    }
+    
+    .qty-btn:hover {
+        background: #1a1a1a;
+        color: #c9a227;
+    }
+    
+    .qty-display {
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 16px;
+        min-width: 20px;
+        text-align: center;
+    }
+</style>
 
 <%- include("./partials/footer") %>

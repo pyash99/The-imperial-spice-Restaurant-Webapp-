@@ -18,8 +18,8 @@ var products = [
         price: 180
     }),
     new Product({
-        image: "https://www.drshikhasharma.com/wp-content/uploads/2018/08/maxresdefault-6.jpg",
-        name: "veg-kadai",
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+        name: "Veg Kadai",
         price: 180
     }),
     new Product({
@@ -81,18 +81,17 @@ var products = [
 ];
 
 function seedDB() {
-    Product.remove({} , (err) => {
-        if(err) {
-            console.log(err);
-        }
-    });
-    
-    let done = 0;
-    products.forEach((product) => {
-        product.save((err , result) => {
-            done++;
+    Product.deleteMany({}).then(() => {
+        let done = 0;
+        products.forEach((product) => {
+            product.save((err, result) => {
+                done++;
+                if (done === products.length) {
+                    console.log("Database seeded successfully!");
+                }
+            });
         });
-    });
+    }).catch(err => console.log(err));
 }
 
 module.exports = seedDB;

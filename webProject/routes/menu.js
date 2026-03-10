@@ -1,5 +1,8 @@
+require("dotenv").config();
+
 const express = require("express"),
-      router  = express.Router();
+      router  = express.Router(),
+      stripe  = require("stripe")(process.env.STRIPE_SECRET_KEY);
       
 //Bring in User , product Model
 let Product = require("../models/product"),
@@ -7,32 +10,55 @@ let Product = require("../models/product"),
     Order   = require("../models/order");
 
 //SHOW ROUTE
-router.get("/menu" , (req , res) => {
-    let successMsg = req.flash('success')[0];
-    Product.find((err , docs) => {
+router.get("/menu" , async (req, res) => {
+    try {
+        let successMsg = req.flash('success')[0];
+        let docs = await Product.find({});
         let productChunks = [];
-            chunkSize     = 3;
+        let chunkSize = 3;
         for(let i = 0; i < docs.length; i+=chunkSize){
             productChunks.push(docs.slice(i, i + chunkSize));
         }
         res.render("menu" , {products: productChunks , successMsg: successMsg , noMessage: !successMsg});
-    });
+    } catch (err) {
+        console.error(err);
+        res.redirect("/");
+    }
 });
 
-router.get("/add-to-cart/:id" , (req , res) => {
-    let productId = req.params.id;
-    let cart = new Cart(req.session.cart ? req.session.cart : {});
-    Product.findById(productId , (err , product) => {
-        if(err) {
+router.get("/add-to-cart/:id" , async (req, res) => {
+    if (!req.isAuthenticated()) {
+        req.flash('error', 'Please login to add items to cart');
+        req.session.oldUrl = '/menu';
+        return res.redirect("/users/login");
+    }
+    
+    try {
+        let productId = req.params.id;
+        let cart = new Cart(req.session.cart ? req.session.cart : {});
+        let product = await Product.findById(productId);
+        if(!product) {
             return res.redirect('/');
         }
-        cart.add(product , product.id);
+        cart.add(product, product.id);
         req.session.cart = cart;
         res.redirect('/menu');
-    });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/');
+    }
 });
 
-router.get("/reduce/:id" , (req , res) => {
+function requireLogin(req, res, next) {
+    if (!req.isAuthenticated()) {
+        req.flash('error', 'Please login to continue');
+        req.session.oldUrl = req.originalUrl;
+        return res.redirect("/users/login");
+    }
+    next();
+}
+
+router.get("/reduce/:id" , requireLogin, (req , res) => {
     let productId = req.params.id;
     let cart = new Cart(req.session.cart ? req.session.cart : {});
 
@@ -41,7 +67,7 @@ router.get("/reduce/:id" , (req , res) => {
     res.redirect("/cart");
 });
 
-router.get("/remove/:id" , (req , res) => {
+router.get("/remove/:id" , requireLogin, (req , res) => {
     let productId = req.params.id;
     let cart = new Cart(req.session.cart ? req.session.cart : {});
 
@@ -51,7 +77,7 @@ router.get("/remove/:id" , (req , res) => {
 });
 
 
-router.get("/cart" , (req, res) => {
+router.get("/cart" , requireLogin, (req, res) => {
     if(!req.session.cart) {
         return res.render("cart" , {products: null});
     } 
@@ -68,37 +94,33 @@ router.get("/checkout" , isLoggedIn , (req , res) => {
     res.render("checkout" , {total: cart.totalPrice , errMsg: errMsg , noError: !errMsg});
 });
 
-router.post("/checkout" , isLoggedIn , (req ,res) => {
-    if(!req.session.cart) {
-        return res.redirect("/cart");
-    } 
-    let cart = new Cart(req.session.cart);
+router.post("/checkout" , isLoggedIn , async (req, res) => {
+    try {
+        if(!req.session.cart) {
+            return res.redirect("/cart");
+        } 
+        let cart = new Cart(req.session.cart);
 
-    const stripe = require('stripe')('sk_test_51Guy1pIlDohFxOFcW3ynn9SXfWM22WbIbzPRjFvJvchec1MehINCciJlQVv3t3NgTbBBGKnbfa7p7PS8LpWpbCH500WXl3gVE2');
-
-    stripe.charges.create({
-        amount: cart.totalPrice,
-        currency: "inr",
-        source: req.body.stripeToken,
-        description: "Test Charge"
-    }, (err , charge) => {
-        if(err) {
-            req.flash('error' , err.message);
-            return res.redirect("/checkout");
-        }
         let order = new Order({
-            user: req.user,
+            user: req.user._id,
             cart: cart,
             address: req.body.address,
             name: req.body.name,
-            paymentId: charge.id
+            phone: req.body.phone,
+            paymentId: "COD-" + Date.now(),
+            status: "Confirmed",
+            orderDate: new Date()
         });
-        order.save((err , result) => {
-            req.flash('success' , 'Successfully bought product!');
-            req.session.cart = null;
-            res.redirect('/menu');
-        });  
-    });
+
+        await order.save();
+        req.flash('success' , 'Order placed successfully! Order ID: ' + order._id);
+        req.session.cart = null;
+        res.redirect('/menu');
+    } catch (err) {
+        console.error(err);
+        req.flash('error' , err.message);
+        return res.redirect("/checkout");
+    }
 });
 
 module.exports = router;

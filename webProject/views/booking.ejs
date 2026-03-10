@@ -1,25 +1,40 @@
 <%- include("./partials/header") %>
+
 <div class="booking">
-    <form class="form" action="/">
+    <div class="container">
         <h1>Book Your Table</h1>
-        <h5>Name</h5>
-        <input class="form-control" type="text" name="name" placeholder="Your name" required>
-        <h5>Email</h5>
-        <input class="form-control" type="email" name="email" placeholder="Your email" required>
-        <h5>Mobile Number</h5>
-        <input class="form-control" type="text" name="number" placeholder="Your mobile number" required>
-        <h5>Date</h5>
-        <input class="form-control" type="date" name="date" placeholder="date" required>
-        <br>
-        <input class="btn btn-success sub" type="submit" value="Book Now" style="margin-left: 130px;">
-    </form>
+        <form class="form" action="/" method="POST">
+            <div class="form-group">
+                <h5>Full Name</h5>
+                <input class="form-control" type="text" name="name" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <h5>Email Address</h5>
+                <input class="form-control" type="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <h5>Mobile Number</h5>
+                <input class="form-control" type="tel" name="number" placeholder="Enter your mobile number" required>
+            </div>
+            <div class="form-group">
+                <h5>Date</h5>
+                <input class="form-control" type="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <h5>Number of Guests</h5>
+                <select class="form-control" name="guests">
+                    <option value="1">1 Person</option>
+                    <option value="2" selected>2 Persons</option>
+                    <option value="3">3 Persons</option>
+                    <option value="4">4 Persons</option>
+                    <option value="5">5 Persons</option>
+                    <option value="6">6 Persons</option>
+                    <option value="7">7+ Persons</option>
+                </select>
+            </div>
+            <button type="submit" class="sub">Book Now</button>
+        </form>
+    </div>
 </div>
-
-<script> 
-    document.querySelector('.sub').addEventListener('click' , () => {
-        alert('Your table has been booked');
-    });
-</script> */
-
 
 <%- include("./partials/footer") %>

@@ -18,10 +18,23 @@ let order = new orderSchema({
         type: String,
         required: true
     },
+    phone: {
+        type: String,
+    },
     paymentId: {
         type: String,
         required: true
+    },
+    status: {
+        type: String,
+        default: 'Confirmed'
+    },
+    orderDate: {
+        type: Date,
+        default: Date.now
     }
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model("Order" , order);

@@ -1,0 +1,80 @@
+<%- include("./partials/header") %>
+
+<div class="profile" style="min-height: 100vh; padding-top: 80px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <br>
+                <h1 style="font-family: 'Playfair Display', serif; color: #fff; text-align: center; margin-bottom: 30px;">My Profile</h1>
+                <hr style="border-color: #c9a227;">
+                
+                <div style="background: rgba(255,255,255,0.95); padding: 30px; border-radius: 10px; margin-bottom: 40px;">
+                    <h3 style="color: #1a1a1a; font-family: 'Poppins', sans-serif; margin-bottom: 20px;"><i class="fas fa-user"></i> User Information</h3>
+                    <h4 style="color: #666;"><strong>Name:</strong> <%= user.name %></h4>
+                    <h4 style="color: #666;"><strong>Email:</strong> <%= user.email %></h4>
+                    <h4 style="color: #666;"><strong>Username:</strong> <%= user.username %></h4>
+                </div>
+                
+                <h2 style="font-family: 'Playfair Display', serif; color: #fff; text-align: center; margin-bottom: 30px;"><i class="fas fa-shopping-bag"></i> My Orders</h2>
+                <hr style="border-color: #c9a227;">
+                
+                <% if(orders && orders.length > 0) { %>
+                    <% orders.forEach((order) => { %>
+                        <div style="background: rgba(255,255,255,0.95); padding: 25px; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #c9a227;">
+                                <div>
+                                    <span style="color: #c9a227; font-weight: 700; font-size: 16px;">Order #<%= order._id.toString().slice(-8).toUpperCase() %></span>
+                                </div>
+                                <div>
+                                    <span style="background: #28a745; color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        <i class="fas fa-check"></i> Confirmed
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <p style="color: #666; margin: 5px 0;"><strong><i class="fas fa-map-marker-alt"></i> Delivery Address:</strong> <%= order.address %></p>
+                                <% if(order.phone) { %>
+                                <p style="color: #666; margin: 5px 0;"><strong><i class="fas fa-phone"></i> Phone:</strong> <%= order.phone %></p>
+                                <% } %>
+                                <p style="color: #666; margin: 5px 0;"><strong><i class="fas fa-calendar"></i> Order Date:</strong> <%= order.orderDate ? new Date(order.orderDate).toLocaleDateString() : (order.createdAt ? order.createdAt.toLocaleDateString() : 'N/A') %></p>
+                                <p style="color: #666; margin: 5px 0;"><strong><i class="fas fa-clock"></i> Time:</strong> <%= order.orderDate ? new Date(order.orderDate).toLocaleTimeString() : (order.createdAt ? order.createdAt.toLocaleTimeString() : 'N/A') %></p>
+                                <p style="color: #666; margin: 5px 0;"><strong><i class="fas fa-money-bill-wave"></i> Payment:</strong> Cash on Delivery</p>
+                            </div>
+                            
+                            <h4 style="color: #1a1a1a; margin-bottom: 15px;">Order Items:</h4>
+                            <ul class="list-group" style="margin-bottom: 20px;">
+                                <% if(order.cart && order.cart.items) { %>
+                                    <% Object.values(order.cart.items).forEach((item) => { %>
+                                        <li class="list-group-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <h4 style="margin: 0; color: #333; font-size: 16px;"><%= item.item ? item.item.name : 'Unknown Item' %></h4>
+                                                <small style="color: #666;">Qty: <%= item.qty %> x <i class="fas fa-rupee-sign"></i><%= item.item ? item.item.price : 0 %></small>
+                                            </div>
+                                            <span style="background: #c9a227; color: #1a1a1a; padding: 5px 12px; border-radius: 15px; font-weight: 600;">
+                                                <i class="fas fa-rupee-sign"></i><%= item.price %>
+                                            </span>
+                                        </li>
+                                    <% }); %>
+                                <% } %>
+                            </ul>
+                            
+                            <div style="text-align: right; padding-top: 15px; border-top: 1px solid #eee;">
+                                <strong style="color: #c9a227; font-size: 20px;">Total: <i class="fas fa-rupee-sign"></i><%= order.cart ? order.cart.totalPrice : 0 %></strong>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div style="text-align: center; padding: 60px 40px; background: rgba(255,255,255,0.95); border-radius: 10px;">
+                        <i class="fas fa-shopping-bag" style="font-size: 60px; color: #ccc; margin-bottom: 20px;"></i>
+                        <h3 style="color: #666; margin-bottom: 10px;">No orders yet</h3>
+                        <p style="color: #999; margin-bottom: 25px;">Start exploring our menu and place your first order!</p>
+                        <a href="/menu" class="bt" style="display: inline-block;">Browse Menu</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include("./partials/footer") %>

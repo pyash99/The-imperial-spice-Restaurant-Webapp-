@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express  = require("express"),
       router   = express.Router(),
       bcrypt   = require("bcryptjs"),
@@ -9,25 +11,24 @@ let User  = require("../models/user"),
     Cart  = require("../models/cart");
 
 //profile page
-router.get("/profile" , isLoggedIn , (req , res) => {
-    Order.find({user: req.user}, (err , orders) => {
-        if(err) {
-            return res.write("ERROR!")
-        }
+router.get("/profile" , isLoggedIn , async (req, res) => {
+    try {
+        let orders = await Order.find({user: req.user._id}).populate('user');
         var cart;
         orders.forEach((order) => {
             cart = new Cart(order.cart);
             order.items = cart.generateArray()
         });
-       
-        res.render('profile.hbs' , {orders: orders , user: req.user});
-    });
+        res.render('profile.ejs' , {orders: orders , user: req.user});
+    } catch (err) {
+        console.error(err);
+        res.write("ERROR!");
+    }
 });
 
 //Logout
 router.get("/logout" , (req , res) => {
     req.logout();
-    // req.flash("succes" , "You are logged out");
     res.redirect("/");
 });
 
@@ -41,27 +42,32 @@ router.get("/register" , (req , res) => {
 });
 
 //Register Process
-router.post("/register" , (req , res) => {
-    const name = req.body.name;
-    const email = req.body.email;
-    const username = req.body.username;
-    const password = req.body.password;
-    const password2 = req.body.password2;
+router.post("/register" , async (req , res) => {
+    try {
+        const name = req.body.name;
+        const email = req.body.email;
+        const username = req.body.username;
+        const password = req.body.password;
+        const password2 = req.body.password2;
 
-    req.checkBody('name' , 'Name is required').notEmpty();
-    req.checkBody('email' , 'Email is required').notEmpty();
-    req.checkBody('email' , 'Email is not valid').isEmail();
-    req.checkBody('username' , 'Username is required').notEmpty();
-    req.checkBody('password' , 'Password is required').notEmpty();
-    req.checkBody('password2' , 'Passwords do not match').equals(req.body.password);
+        req.checkBody('name' , 'Name is required').notEmpty();
+        req.checkBody('email' , 'Email is required').notEmpty();
+        req.checkBody('email' , 'Email is not valid').isEmail();
+        req.checkBody('username' , 'Username is required').notEmpty();
+        req.checkBody('password' , 'Password is required').notEmpty();
+        req.checkBody('password2' , 'Passwords do not match').equals(req.body.password);
 
-    let errors = req.validationErrors();
+        let errors = req.validationErrors();
 
-    if(errors) {
-        res.render('register' , {
-            errors: errors
-        });
-    } else {
+        if(errors) {
+            return res.render('register' , { errors: errors });
+        }
+
+        let existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        if (existingUser) {
+            return res.render('register' , { errors: [{ msg: 'User already exists' }] });
+        }
+
         let newUser = new User({
             name: name,
             email: email,
@@ -69,23 +75,16 @@ router.post("/register" , (req , res) => {
             password: password
         });
 
-        bcrypt.genSalt(10 , (err , salt) => {
-            bcrypt.hash(newUser.password, salt , (err , hash) => {
-                if(err) {
-                    console.log(err);
-                }
-                newUser.password = hash;
-                newUser.save((err) => {
-                    if(err) {
-                        console.log(err);
-                        return;
-                    } else {
-                        req.flash('succes' , 'You are now registered and can login');
-                        res.redirect("/users/login");
-                    }
-                })
-            });
-        }); 
+        let salt = await bcrypt.genSalt(10);
+        let hash = await bcrypt.hash(newUser.password, salt);
+        newUser.password = hash;
+        
+        await newUser.save();
+        req.flash('success' , 'You are now registered and can login');
+        res.redirect("/users/login");
+    } catch (err) {
+        console.error(err);
+        res.render('register' , { errors: [{ msg: 'Error registering user' }] });
     }
 });
 
